@@ -1,6 +1,7 @@
 {
   stdenv,
   zig_0_13,
+  shared ? false,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "hiv";
@@ -15,7 +16,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   buildPhase = ''
     mkdir -p .cache
-    zig build install --cache-dir $(pwd)/.zig-cache --global-cache-dir $(pwd)/.cache -Dcpu=baseline -Doptimize=ReleaseSafe --prefix $out
+    zig build --cache-dir $(pwd)/.zig-cache --global-cache-dir $(pwd)/.cache -Dcpu=baseline -Doptimize=ReleaseSafe
   '';
 
   postFixup = ''
@@ -32,8 +33,16 @@ stdenv.mkDerivation (finalAttrs: {
     Cflags: -I$out/include" > $out/lib/pkgconfig/hiv.pc
   '';
 
-  installPhase = ''
-    mkdir -p $out/lib $out/include/hiv
-    cp include/* $out/include/hiv
-  '';
+  installPhase =
+    if shared
+    then ''
+      mkdir -p $out/lib $out/include/hiv
+      cp zig-out/lib/libhiv.so $out/lib
+      cp include/* $out/include/hiv
+    ''
+    else ''
+      mkdir -p $out/lib $out/include/hiv
+      cp zig-out/lib/libhiv.a $out/lib
+      cp include/* $out/include/hiv
+    '';
 })

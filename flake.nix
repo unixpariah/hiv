@@ -33,6 +33,7 @@
 
         packages.default =
           pkgs.callPackage ./default.nix {};
+        packages.shared = pkgs.callPackage ./default.nix {shared = true;};
       }
     );
 }
