@@ -34,7 +34,7 @@ pub fn build(b: *std.Build) !void {
     };
 
     exe.addCSourceFiles(.{
-        .files = source_files ++ test_files,
+        .files = source_files,
         .flags = flags,
     });
 
