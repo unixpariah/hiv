@@ -108,7 +108,7 @@ void *array_list_pop_or_null(ArrayList *array_list) {
 }
 
 void *array_list_swap_remove(ArrayList *array_list, uint32_t index) {
-  assert(index < 0 || index >= array_list->len);
+  assert(index < 0 || index < array_list->len);
 
   if (array_list->len - 1 == index) {
     return array_list_pop(array_list);

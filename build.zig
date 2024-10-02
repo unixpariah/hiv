@@ -49,4 +49,34 @@ pub fn build(b: *std.Build) !void {
     const clang_tidy_cmd = b.addSystemCommand(.{"clang-tidy"} ++ source_files ++ test_files);
     const tidy_step = b.step("tidy", "Run clang-tidy");
     tidy_step.dependOn(&clang_tidy_cmd.step);
+
+    var valgrind_cmd = b.addSystemCommand(&.{"valgrind"});
+    if (b.args) |args| {
+        for (args) |arg| valgrind_cmd.addArg(arg);
+    }
+    valgrind_cmd.addArg("./zig-out/bin/eeyelop");
+    const valgrind_step = b.step("valgrind", "Run valgrind");
+    valgrind_step.dependOn(&valgrind_cmd.step);
+    valgrind_step.dependOn(&run_cmd.step);
+
+    const test_exe = b.addExecutable(.{
+        .name = "test_hiv",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    test_exe.linkLibC();
+
+    test_exe.addIncludePath(b.path("include"));
+    test_exe.addLibraryPath(b.path("lib"));
+
+    // Add test files and the same flags
+    test_exe.addCSourceFiles(.{
+        .files = test_files ++ source_files, // Link the main source files as well
+        .flags = flags,
+    });
+
+    const test_cmd = b.addRunArtifact(test_exe);
+    const test_step = b.step("test", "Run tests");
+    test_step.dependOn(&test_cmd.step);
 }
