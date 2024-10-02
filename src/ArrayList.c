@@ -11,17 +11,19 @@ void array_list_init(ArrayList *array_list) {
   array_list->items = NULL;
 }
 
-enum Result array_list_init_capacity(ArrayList *array_list, uint32_t capacity) {
+enum ArrayListResult array_list_init_capacity(ArrayList *array_list,
+                                              uint32_t capacity) {
+  assert(capacity > 0);
   void **items = (void **)malloc(sizeof(void *) * capacity);
   if ((void *)items == NULL) {
-    return OOM;
+    return ARRAY_LIST_OOM;
   }
 
   array_list->capacity = capacity;
   array_list->len = 0;
   array_list->items = items;
 
-  return OK;
+  return ARRAY_LIST_OK;
 }
 
 uint32_t grow_capacity(uint32_t current, uint32_t minimum) {
@@ -32,28 +34,29 @@ uint32_t grow_capacity(uint32_t current, uint32_t minimum) {
   return new_capacity;
 }
 
-enum Result array_list_ensure_total_capacity_precise(ArrayList *array_list,
-                                                     uint32_t new_capacity) {
+enum ArrayListResult
+array_list_ensure_total_capacity_precise(ArrayList *array_list,
+                                         uint32_t new_capacity) {
   if (array_list->capacity >= new_capacity) {
-    return OK;
+    return ARRAY_LIST_OK;
   }
 
   void **new_items = (void **)realloc((void *)array_list->items,
                                       new_capacity * sizeof(void *));
   if (!new_items) {
-    return OOM;
+    return ARRAY_LIST_OOM;
   }
 
   array_list->capacity = new_capacity;
   array_list->items = new_items;
 
-  return OK;
+  return ARRAY_LIST_OK;
 }
 
-enum Result array_list_ensure_total_capacity(ArrayList *array_list,
-                                             uint32_t new_capacity) {
+enum ArrayListResult array_list_ensure_total_capacity(ArrayList *array_list,
+                                                      uint32_t new_capacity) {
   if (array_list->capacity >= new_capacity) {
-    return OK;
+    return ARRAY_LIST_OK;
   }
 
   uint32_t better_capacity = grow_capacity(array_list->capacity, new_capacity);
@@ -68,21 +71,21 @@ void **array_list_add_one_assume_capacity(ArrayList *array_list) {
 
 void **array_list_add_one(ArrayList *array_list) {
   uint32_t new_len = array_list->len + 1;
-  if (array_list_ensure_total_capacity(array_list, new_len) == OOM) {
+  if (array_list_ensure_total_capacity(array_list, new_len) == ARRAY_LIST_OOM) {
     return NULL;
   };
   return array_list_add_one_assume_capacity(array_list);
 }
 
-enum Result array_list_append(ArrayList *array_list, void *item) {
+enum ArrayListResult array_list_append(ArrayList *array_list, void *item) {
   void **new_item_ptr = array_list_add_one(array_list);
   if ((void *)new_item_ptr == NULL) {
-    return OOM;
+    return ARRAY_LIST_OOM;
   }
 
   *new_item_ptr = item;
 
-  return OK;
+  return ARRAY_LIST_OK;
 }
 
 void array_list_append_assume_capacity(ArrayList *array_list, void *item) {

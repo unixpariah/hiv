@@ -1,113 +1,201 @@
 #include "ArrayList.h"
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void array_list_append_test(void) {
+int array_list_init_capacity_test(void) {
+  ArrayList array_list = {0};
+  array_list_init_capacity(&array_list, 10);
+
+  if (array_list.capacity != 10) {
+    return -1;
+  }
+
+  for (uint32_t i = 0; i < array_list.capacity; i++) {
+    uint32_t *item = malloc(sizeof(uint32_t));
+    memcpy(item, &i, sizeof(uint32_t));
+    array_list_append_assume_capacity(&array_list, item);
+  }
+
+  if (array_list.len != array_list.capacity) {
+    return -1;
+  }
+
+  uint32_t new_value = 100;
+  uint32_t *new_item = malloc(sizeof(uint32_t));
+  memcpy(new_item, &new_value, sizeof(uint32_t));
+  array_list_append(&array_list, new_item);
+
+  if (array_list.len != 11 || array_list.capacity <= 10) {
+    return -1;
+  }
+
+  if (*(uint32_t *)array_list.items[10] != 100) {
+    return -1;
+  }
+
+  array_list_deinit(&array_list);
+
+  return 0;
+}
+
+int array_list_append_test(void) {
   ArrayList array_list = {0};
   array_list_init(&array_list);
 
-  for (int i = 0; i < 10; i++) {
-    void *item = malloc(sizeof(int *));
-    memcpy(item, &i, sizeof(int));
+  for (uint32_t i = 0; i < 10; i++) {
+    uint32_t *item = malloc(sizeof(uint32_t));
+    memcpy(item, &i, sizeof(uint32_t));
     array_list_append(&array_list, item);
-    assert(array_list.len == i + 1);
+    if (array_list.len != i + 1) {
+      return -1;
+    }
   }
 
-  for (int i = 0; i < 10; i++) {
-    assert(*(int *)array_list.items[i] == i);
+  for (uint32_t i = 0; i < 10; i++) {
+    if (*(uint32_t *)array_list.items[i] != i) {
+      return -1;
+    }
   }
 
   array_list_deinit(&array_list);
   array_list_init(&array_list);
 
-  int value = 42;
-  void *item = malloc(sizeof(int *));
-  memcpy(item, &value, sizeof(int));
+  uint32_t value = 42;
+  uint32_t *item = malloc(sizeof(uint32_t));
+  memcpy(item, &value, sizeof(uint32_t));
   array_list_append(&array_list, item);
-  assert(array_list.len == 1);
-  assert(*(int *)array_list.items[0] == 42);
+  if (array_list.len != 1 || *(uint32_t *)array_list.items[0] != 42) {
+    return -1;
+  }
 
   array_list_deinit(&array_list);
+  return 0;
 }
 
-void array_list_pop_test(void) {
+int array_list_pop_test(void) {
   ArrayList array_list;
   array_list_init(&array_list);
 
-  assert(array_list_pop_or_null(&array_list) == NULL);
+  if (array_list_pop_or_null(&array_list) != NULL) {
+    return -1;
+  }
 
-  for (int i = 0; i < 10; i++) {
-    void *item = malloc(sizeof(int *));
-    memcpy(item, &i, sizeof(int));
+  for (uint32_t i = 0; i < 10; i++) {
+    uint32_t *item = malloc(sizeof(uint32_t));
+    memcpy(item, &i, sizeof(uint32_t));
     array_list_append(&array_list, item);
   }
 
-  for (int i = 9; i >= 0; i--) {
-    int *num = (int *)array_list_pop(&array_list);
-    assert(array_list.len == i);
-    assert(*num == i);
+  for (uint32_t i = 10; i > 0; i--) {
+    uint32_t *num = array_list_pop(&array_list);
+    if (array_list.len != i - 1 || *num != i - 1) {
+      return -1;
+    }
+    free(num);
   }
 
-  assert(array_list_pop_or_null(&array_list) == NULL);
+  if (array_list_pop_or_null(&array_list) != NULL) {
+    return -1;
+  }
 
   array_list_deinit(&array_list);
+  return 0;
 }
 
-void array_list_swap_remove_test(void) {
+int array_list_swap_remove_test(void) {
   ArrayList array_list;
   array_list_init(&array_list);
 
-  for (int i = 0; i < 10; i++) {
-    void *item = malloc(sizeof(int *));
-    memcpy(item, &i, sizeof(int));
+  for (uint32_t i = 0; i < 10; i++) {
+    uint32_t *item = malloc(sizeof(uint32_t));
+    memcpy(item, &i, sizeof(uint32_t));
     array_list_append(&array_list, item);
   }
 
-  int *num = (int *)array_list_swap_remove(&array_list, 4);
-  assert(array_list.len == 9);
-  assert(*num == 4);
-  assert(*(int *)array_list.items[4] == 9);
+  uint32_t *num = array_list_swap_remove(&array_list, 4);
+  if (array_list.len != 9 || *num != 4 ||
+      *(uint32_t *)array_list.items[4] != 9) {
+    return -1;
+  }
+  free(num);
 
-  num = (int *)array_list_swap_remove(&array_list, array_list.len - 1);
-  assert(array_list.len == 8);
-  assert(*num == 8);
+  num = (uint32_t *)array_list_swap_remove(&array_list, array_list.len - 1);
+  if (array_list.len != 8 || *num != 8) {
+    return -1;
+  }
+  free(num);
 
   array_list_deinit(&array_list);
+  return 0;
 }
 
-void array_list_ordered_remove_test(void) {
+int array_list_ordered_remove_test(void) {
   ArrayList array_list;
   array_list_init(&array_list);
 
-  for (int i = 0; i < 10; i++) {
-    void *item = malloc(sizeof(int *));
-    memcpy(item, &i, sizeof(int));
+  for (uint32_t i = 0; i < 10; i++) {
+    uint32_t *item = malloc(sizeof(uint32_t));
+    memcpy(item, &i, sizeof(uint32_t));
     array_list_append(&array_list, item);
   }
 
-  int *num = (int *)array_list_ordered_remove(&array_list, 4);
-  assert(array_list.len == 9);
-  assert(*num == 4);
-
-  for (int i = 0; i < 4; i++) {
-    assert(*(int *)array_list.items[i] == i);
+  uint32_t *num = array_list_ordered_remove(&array_list, 4);
+  if (array_list.len != 9 || *num != 4) {
+    return -1;
   }
+  free(num);
 
-  for (int i = 4; i < array_list.len; i++) {
-    assert(*(int *)array_list.items[i] == i + 1);
+  for (uint32_t i = 0; i < 4; i++) {
+    if (*(uint32_t *)array_list.items[i] != i) {
+      return -1;
+    }
+  }
+  for (uint32_t i = 4; i < array_list.len; i++) {
+    if (*(uint32_t *)array_list.items[i] != i + 1) {
+      return -1;
+    }
   }
 
   array_list_deinit(&array_list);
+  return 0;
 }
 
 int main(void) {
-  array_list_append_test();
-  array_list_pop_test();
-  array_list_swap_remove_test();
-  array_list_ordered_remove_test();
+  uint32_t passes = 0;
 
-  printf("All tests passed successfully!\n");
-  return 0;
+  if (array_list_append_test() == -1) {
+    printf("Passed %d tests\n", passes);
+    return EXIT_FAILURE;
+  }
+  passes++;
+
+  if (array_list_pop_test() == -1) {
+    printf("Passed %d tests\n", passes);
+    return EXIT_FAILURE;
+  }
+  passes++;
+
+  if (array_list_swap_remove_test() == -1) {
+    printf("Passed %d tests\n", passes);
+    return EXIT_FAILURE;
+  }
+  passes++;
+
+  if (array_list_ordered_remove_test() == -1) {
+    printf("Passed %d tests\n", passes);
+    return EXIT_FAILURE;
+  }
+  passes++;
+
+  if (array_list_init_capacity_test() == -1) {
+    printf("Passed %d tests\n", passes);
+    return EXIT_FAILURE;
+  }
+  passes++;
+
+  printf("Passed %d tests\n", passes);
+  return EXIT_SUCCESS;
 }

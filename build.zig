@@ -17,10 +17,12 @@ pub fn build(b: *std.Build) !void {
 
     const source_files = &[_][]const u8{
         "src/ArrayList.c",
+        "src/EventLoop.c",
     };
 
     const test_files = &[_][]const u8{
         "tests/test_ArrayList.c",
+        //"tests/test_EventLoop.c",
     };
 
     const flags = &[_][]const u8{
@@ -59,24 +61,25 @@ pub fn build(b: *std.Build) !void {
     valgrind_step.dependOn(&valgrind_cmd.step);
     valgrind_step.dependOn(&run_cmd.step);
 
-    const test_exe = b.addExecutable(.{
-        .name = "test_hiv",
-        .target = target,
-        .optimize = optimize,
-    });
-
-    test_exe.linkLibC();
-
-    test_exe.addIncludePath(b.path("include"));
-    test_exe.addLibraryPath(b.path("lib"));
-
-    // Add test files and the same flags
-    test_exe.addCSourceFiles(.{
-        .files = test_files ++ source_files, // Link the main source files as well
-        .flags = flags,
-    });
-
-    const test_cmd = b.addRunArtifact(test_exe);
     const test_step = b.step("test", "Run tests");
-    test_step.dependOn(&test_cmd.step);
+    inline for (test_files) |test_file| {
+        const test_exe = b.addExecutable(.{
+            .name = "test_hiv",
+            .target = target,
+            .optimize = optimize,
+        });
+
+        test_exe.linkLibC();
+
+        test_exe.addIncludePath(b.path("include"));
+        test_exe.addLibraryPath(b.path("lib"));
+
+        test_exe.addCSourceFiles(.{
+            .files = source_files ++ &[_][]const u8{test_file},
+            .flags = flags,
+        });
+
+        const test_cmd = b.addRunArtifact(test_exe);
+        test_step.dependOn(&test_cmd.step);
+    }
 }

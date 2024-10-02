@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-enum Result {
-  OK = 0,
-  OOM = 1,
+enum ArrayListResult {
+  ARRAY_LIST_OK = 0,
+  ARRAY_LIST_OOM = 1,
 };
 
 typedef struct {
@@ -19,11 +19,12 @@ void array_list_init(ArrayList *array_list);
 
 /// Initialize with capacity.
 /// Must be freed with array_list_deinit.
-enum Result array_list_init_capacity(ArrayList *array_list, uint32_t capacity);
+enum ArrayListResult array_list_init_capacity(ArrayList *array_list,
+                                              uint32_t capacity);
 
 /// Extend list by 1 element.
 /// Allocates more memory if necessary.
-enum Result array_list_append(ArrayList *array_list, void *item);
+enum ArrayListResult array_list_append(ArrayList *array_list, void *item);
 
 /// Extend list by 1 element.
 /// Asserts that list can hold additional item.
