@@ -68,4 +68,8 @@ void *array_list_pop_or_null(ArrayList *array_list);
 /// Release all allocated memory
 void array_list_deinit(ArrayList *array_list);
 
+void *array_list_get_last(ArrayList *array_list);
+
+void *array_list_get_last_or_null(ArrayList *array_list);
+
 #endif // ARRAY_LIST_H

@@ -26,6 +26,7 @@
         devShell = pkgs.mkShell {
           packages = with pkgs; [
             clang-tools
+            valgrind
             zls.packages.${system}.default
             zig.packages.${system}."0.13.0"
           ];

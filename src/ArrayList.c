@@ -140,10 +140,18 @@ void *array_list_ordered_remove(ArrayList *array_list, uint32_t index) {
   return old_item;
 }
 
-void array_list_deinit(ArrayList *array_list) {
-  for (uint32_t i = 0; i < array_list->len; i++) {
-    free(array_list->items[i]);
+void *array_list_get_last(ArrayList *array_list) {
+  return array_list->items[array_list->len - 1];
+}
+
+void *array_list_get_last_or_null(ArrayList *array_list) {
+  if (array_list->len == 0) {
+    return NULL;
   }
+  return array_list_get_last(array_list);
+}
+
+void array_list_deinit(ArrayList *array_list) {
   free((void *)array_list->items);
   array_list->items = NULL;
   array_list->capacity = 0;

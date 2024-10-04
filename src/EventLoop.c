@@ -1,10 +1,12 @@
 #include "ArrayList.h"
-#include "sys/poll.h"
 #include <EventLoop.h>
 #include <poll.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <sys/poll.h>
 
+/// Must be freed with event_loop_deinit
 void event_loop_init(EventLoop *event_loop) {
   ArrayList pollfds = {0};
   array_list_init(&pollfds);
@@ -29,6 +31,7 @@ enum EventLoopResult event_loop_insert_source(EventLoop *event_loop, int32_t fd,
 
   struct pollfd *pollfd = malloc(sizeof(struct pollfd));
   if (pollfd == NULL) {
+    free(polldata);
     return EVENT_LOOP_OOM;
   }
 
@@ -36,10 +39,15 @@ enum EventLoopResult event_loop_insert_source(EventLoop *event_loop, int32_t fd,
   pollfd->events = POLLIN;
   pollfd->revents = 0;
 
-  if (array_list_append(&event_loop->pollfds, &pollfd) == ARRAY_LIST_OOM) {
+  if (array_list_append(&event_loop->pollfds, pollfd) == ARRAY_LIST_OOM) {
+    free(polldata);
+    free(pollfd);
     return EVENT_LOOP_OOM;
   }
-  if (array_list_append(&event_loop->polldata, &polldata) == ARRAY_LIST_OOM) {
+  if (array_list_append(&event_loop->polldata, polldata) == ARRAY_LIST_OOM) {
+    free(polldata);
+    free(pollfd);
+    array_list_pop(&event_loop->pollfds);
     return EVENT_LOOP_OOM;
   }
 
@@ -47,8 +55,8 @@ enum EventLoopResult event_loop_insert_source(EventLoop *event_loop, int32_t fd,
 }
 
 enum EventLoopResult event_loop_poll(EventLoop *event_loop) {
-  int32_t events = poll((struct pollfd *)event_loop->pollfds.items,
-                        event_loop->pollfds.len, -1);
+  int32_t events =
+      poll(*event_loop->pollfds.items, event_loop->pollfds.len, -1);
   if (events == -1) {
     return EVENT_LOOP_POLL_ERR;
   }
