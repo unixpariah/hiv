@@ -14,15 +14,15 @@ pub fn build(b: *std.Build) !void {
     static_lib.addIncludePath(b.path("include"));
     static_lib.addLibraryPath(b.path("lib"));
 
-    const shared_lib = b.addSharedLibrary(.{
-        .name = "hiv",
-        .target = target,
-        .optimize = optimize,
-    });
+    // const shared_lib = b.addSharedLibrary(.{
+    //     .name = "hiv",
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
-    shared_lib.linkLibC();
-    shared_lib.addIncludePath(b.path("include"));
-    shared_lib.addLibraryPath(b.path("lib"));
+    // shared_lib.linkLibC();
+    // shared_lib.addIncludePath(b.path("include"));
+    // shared_lib.addLibraryPath(b.path("lib"));
 
     const source_files = &[_][]const u8{
         "src/ArrayList.c",
@@ -44,13 +44,13 @@ pub fn build(b: *std.Build) !void {
         .flags = flags,
     });
 
-    shared_lib.addCSourceFiles(.{
-        .files = source_files,
-        .flags = flags,
-    });
+    // shared_lib.addCSourceFiles(.{
+    //     .files = source_files,
+    //     .flags = flags,
+    // });
 
     b.installArtifact(static_lib);
-    b.installArtifact(shared_lib);
+    // b.installArtifact(shared_lib);
 
     const test_files = &[_][]const u8{
         "tests/test_ArrayList.c",
@@ -80,6 +80,6 @@ pub fn build(b: *std.Build) !void {
 
         const test_cmd = b.addRunArtifact(test_exe);
         test_step.dependOn(&test_cmd.step);
-        b.installArtifact(test_exe);
+        //b.installArtifact(test_exe);
     }
 }
