@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/poll.h>
+#include <unistd.h>
 
 /// Must be freed with event_loop_deinit
 void event_loop_init(EventLoop *event_loop) {
@@ -19,8 +20,9 @@ void event_loop_init(EventLoop *event_loop) {
 }
 
 enum EventLoopResult event_loop_insert_source(EventLoop *event_loop, int32_t fd,
-                                              void (*callback)(void *data),
-                                              void *data) {
+                                              void (*callback)(int fd,
+                                                               void *data),
+                                              void *data, uint32_t repeats) {
   PollData *polldata = malloc(sizeof(PollData));
   if (polldata == NULL) {
     return EVENT_LOOP_OOM;
@@ -28,6 +30,7 @@ enum EventLoopResult event_loop_insert_source(EventLoop *event_loop, int32_t fd,
 
   polldata->data = data;
   polldata->callback = callback;
+  polldata->repeats = repeats;
 
   struct pollfd *pollfd = malloc(sizeof(struct pollfd));
   if (pollfd == NULL) {
@@ -46,8 +49,7 @@ enum EventLoopResult event_loop_insert_source(EventLoop *event_loop, int32_t fd,
   }
   if (array_list_append(&event_loop->polldata, polldata) == ARRAY_LIST_OOM) {
     free(polldata);
-    free(pollfd);
-    array_list_pop(&event_loop->pollfds);
+    free(array_list_pop(&event_loop->pollfds));
     return EVENT_LOOP_OOM;
   }
 
@@ -61,11 +63,19 @@ enum EventLoopResult event_loop_poll(EventLoop *event_loop) {
     return EVENT_LOOP_POLL_ERR;
   }
 
-  for (int32_t i = 0; i < events; i++) {
-    struct pollfd *pollfd = event_loop->pollfds.items[i];
-    if (pollfd->revents & POLLIN) {
-      PollData *polldata = event_loop->polldata.items[i];
-      polldata->callback(polldata->data);
+  if (events > 0) {
+    for (uint32_t i = 0; i < event_loop->pollfds.len; i++) {
+      struct pollfd *pollfd = event_loop->pollfds.items[i];
+      if (pollfd->revents & POLLIN) {
+        PollData *polldata = event_loop->polldata.items[i];
+        polldata->callback(pollfd->fd, polldata->data);
+        if (polldata->repeats == 1) {
+          free(array_list_swap_remove(&event_loop->polldata, i));
+          free(array_list_swap_remove(&event_loop->pollfds, i));
+        } else if (polldata->repeats != 0) {
+          polldata->repeats--;
+        }
+      }
     }
   }
 
