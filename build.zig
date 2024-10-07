@@ -80,6 +80,6 @@ pub fn build(b: *std.Build) !void {
 
         const test_cmd = b.addRunArtifact(test_exe);
         test_step.dependOn(&test_cmd.step);
-        //b.installArtifact(test_exe);
+        b.installArtifact(test_exe);
     }
 }
