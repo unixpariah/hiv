@@ -13,7 +13,7 @@ enum EventLoopResult {
 typedef struct {
   void (*callback)(int fd, void *data);
   void *data;
-  uint32_t repeats;
+  int32_t repeats;
 } PollData;
 
 typedef struct {
@@ -26,7 +26,7 @@ void event_loop_init(EventLoop *event_loop);
 enum EventLoopResult event_loop_insert_source(EventLoop *event_loop, int32_t fd,
                                               void (*callback)(int fd,
                                                                void *data),
-                                              void *data, uint32_t repeats);
+                                              void *data, int32_t repeats);
 
 enum EventLoopResult event_loop_poll(EventLoop *event_loop);
 

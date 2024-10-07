@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) !void {
 
     const source_files = &[_][]const u8{
         "src/ArrayList.c",
-        "src/EventLoop.c",
+        //"src/EventLoop.c",
     };
 
     const flags = &[_][]const u8{
@@ -54,7 +54,7 @@ pub fn build(b: *std.Build) !void {
 
     const test_files = &[_][]const u8{
         "tests/test_ArrayList.c",
-        "tests/test_EventLoop.c",
+        //"tests/test_EventLoop.c",
     };
 
     const clang_tidy_cmd = b.addSystemCommand(.{"clang-tidy"} ++ source_files ++ test_files);

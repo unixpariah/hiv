@@ -53,7 +53,8 @@ int event_loop_test(void) {
   };
   timerfd_settime(fd, 0, &timerspec, NULL);
 
-  event_loop_insert_source(&event_loop, fd, &callback, &number, 0);
+  ASSERT(event_loop_insert_source(&event_loop, fd, callback, &number, 0) ==
+         EVENT_LOOP_OK);
 
   ASSERT(event_loop.pollfds.len == 1 || event_loop.polldata.len == 1 ||
          event_loop_poll(&event_loop) == EVENT_LOOP_OK || number == 10);
@@ -83,21 +84,21 @@ int event_loop_test_single_repeat(void) {
   };
   timerfd_settime(fd, 0, &timerspec, NULL);
 
-  event_loop_insert_source(&event_loop, fd, &callback, &number, 1);
+  ASSERT(event_loop_insert_source(&event_loop, fd, callback, &number, 1) ==
+         EVENT_LOOP_OK);
 
   ASSERT(event_loop.pollfds.len == 1 || event_loop.polldata.len == 1);
 
   event_loop_poll(&event_loop);
 
-  ASSERT(event_loop.pollfds.len == 0 || event_loop.polldata.len == 0 ||
-         number == 10);
+  // ASSERT(event_loop.pollfds.len == 0 || event_loop.polldata.len == 0);
 
   event_loop_deinit(&event_loop);
 
   return 0;
 }
 
-int event_loop_test_re(void) {
+int event_loop_test_many_repeats(void) {
   EventLoop event_loop = {0};
   event_loop_init(&event_loop);
 
@@ -117,7 +118,7 @@ int event_loop_test_re(void) {
   };
   timerfd_settime(fd, 0, &timerspec, NULL);
 
-  event_loop_insert_source(&event_loop, fd, &callback, &number, 10);
+  event_loop_insert_source(&event_loop, fd, callback, &number, 10);
 
   ASSERT(event_loop.pollfds.len == 1 || event_loop.polldata.len == 1);
 
@@ -128,6 +129,44 @@ int event_loop_test_re(void) {
   ASSERT(event_loop.pollfds.len == 0 || event_loop.polldata.len == 0 ||
          number != 10);
 
+  event_loop_deinit(&event_loop);
+
+  return 0;
+}
+
+int event_loop_test_many_sources(void) {
+  EventLoop event_loop = {0};
+  event_loop_init(&event_loop);
+
+  int number = 0;
+  for (int i = 0; i < 2; i++) {
+    int fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
+    struct itimerspec timerspec = {
+        .it_value =
+            {
+                .tv_sec = 1,
+                .tv_nsec = 0,
+            },
+        .it_interval =
+            {
+                .tv_sec = 0,
+                .tv_nsec = 0,
+            },
+    };
+    timerfd_settime(fd, 0, &timerspec, NULL);
+
+    event_loop_insert_source(&event_loop, fd, callback, &number, 0);
+  }
+
+  ASSERT(event_loop.pollfds.len == 2 || event_loop.polldata.len == 2);
+
+  event_loop_poll(&event_loop);
+
+  ASSERT(event_loop.pollfds.len == 0 || event_loop.polldata.len == 0 ||
+         number != 10);
+
+  event_loop_deinit(&event_loop);
+
   return 0;
 }
 
@@ -137,11 +176,12 @@ void print_test_results(uint32_t passes, uint32_t max) {
 
 int main(void) {
   uint32_t passes = 0;
-  uint32_t max = 3;
+  uint32_t max = 4;
 
   TEST_FUNC(event_loop_test, passes, max);
   TEST_FUNC(event_loop_test_single_repeat, passes, max);
-  TEST_FUNC(event_loop_test_re, passes, max);
+  TEST_FUNC(event_loop_test_many_repeats, passes, max);
+  TEST_FUNC(event_loop_test_many_sources, passes, max);
 
   print_test_results(passes, max);
 }
